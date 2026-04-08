@@ -52,13 +52,13 @@ exit
 
 int range f0/1-2
 switchport mode trunk
-switchport trunk allowed vlan 110,120
+switchport trunk allowed vlan 110,120,199
 switchport trunk native vlan 199
 exit
 
 int range f0/3-4
 switchport mode trunk
-switchport trunk allowed vlan 210,220
+switchport trunk allowed vlan 210,220,299
 switchport trunk native vlan 299
 exit
 
