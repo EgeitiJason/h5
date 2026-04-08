@@ -50,6 +50,18 @@ int vlan 99
 ip address 10.0.99.2 255.255.255.0
 exit
 
+int range f0/1-2
+switchport mode trunk
+switchport trunk allowed vlan 110,120
+switchport trunk native vlan 199
+exit
+
+int range f0/3-4
+switchport mode trunk
+switchport trunk allowed vlan 210,220
+switchport trunk native vlan 299
+exit
+
 int range f0/5-8
 switchport mode access
 switchport access vlan 20
@@ -67,7 +79,7 @@ exit
 
 int g0/2
 switchport mode trunk
-switchport trunk allowed vlan 10,20,99,110,120,199,210
+switchport trunk allowed vlan 10,20,99,110,120,199,210,220,299
 switchport trunk native vlan 666
 exit
 
