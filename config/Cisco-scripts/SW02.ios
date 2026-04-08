@@ -47,7 +47,7 @@ name Native
 exit
 
 int vlan 99
-ip address 10.0.99.2 255.255.255.0
+ip address 10.0.99.3 255.255.255.0
 exit
 
 int range f0/1-2
