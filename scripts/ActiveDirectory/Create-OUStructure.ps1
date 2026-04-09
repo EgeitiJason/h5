@@ -10,15 +10,8 @@ $config = @{
 # Define OU hierarchy - modify this structure to change OUs
 $ouStructure = @(
     @{
-        Name = "Servers"
+        Name = "Computers"
         Children = @()
-    },
-    @{
-        Name = "Users"
-        Children = @(
-            @{ Name = "Admin" },
-            @{ Name = "Service Accounts" }
-        )
     },
     @{
         Name = "Groups"
@@ -28,8 +21,15 @@ $ouStructure = @(
         )
     },
     @{
-        Name = "Computers"
+        Name = "Servers"
         Children = @()
+    },
+    @{
+        Name = "Users"
+        Children = @(
+            @{ Name = "Admin" },
+            @{ Name = "Service Accounts" }
+        )
     }
 )
 
@@ -76,29 +76,44 @@ function New-OUIfNotExists {
 
 # Main execution
 Write-Host "=== Creating Active Directory OU Structure ===" -ForegroundColor Cyan
-$companyPath = "OU=$($config.OuCompany),$($config.OuBase)"
 
-# Create company OU first
+# Ensure company OU exists and capture its distinguished name
 try {
-    $null = New-OUIfNotExists -Name $config.OuCompany -Path $config.OuBase
+    $companyPath = New-OUIfNotExists -Name $config.OuCompany -Path $config.OuBase
 } catch {
     Write-Error "Failed to create company OU. Exiting."
     exit 1
 }
 
-# Create child OUs
+function New-OUHierarchy {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ParentPath,
+
+        [Parameter(Mandatory = $true)]
+        [hashtable]$Node
+    )
+
+    # Create or get this node's OU
+    $currentPath = New-OUIfNotExists -Name $Node.Name -Path $ParentPath
+    if (-not $currentPath) {
+        throw "Failed to create or retrieve OU '$($Node.Name)' under '$ParentPath'"
+    }
+
+    # Recurse into children (supports unlimited depth)
+    if ($Node.Children -and $Node.Children.Count -gt 0) {
+        foreach ($child in $Node.Children) {
+            New-OUHierarchy -ParentPath $currentPath -Node $child
+        }
+    }
+}
+
+# Create all OUs recursively
 foreach ($ou in $ouStructure) {
     try {
-        $ouPath = New-OUIfNotExists -Name $ou.Name -Path $companyPath
-        
-        # Create nested children if defined
-        if ($ou.Children -and $ou.Children.Count -gt 0) {
-            foreach ($child in $ou.Children) {
-                $null = New-OUIfNotExists -Name $child.Name -Path $ouPath
-            }
-        }
+        New-OUHierarchy -ParentPath $companyPath -Node $ou
     } catch {
-        Write-Error "Failed to create OU '$($ou.Name)'"
+        Write-Error "Failed to create OU '$($ou.Name)': $_"
     }
 }
 
