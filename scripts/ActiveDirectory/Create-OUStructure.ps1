@@ -55,22 +55,20 @@ function New-OUIfNotExists {
         [string]$Path
     )
     
-    try {
-        $ou = Get-ADOrganizationalUnit -Filter {Name -eq $Name} -SearchBase $Path -ErrorAction Stop
+    $ou = Get-ADOrganizationalUnit -Filter {Name -eq $Name} -SearchBase $Path
+    
+    if ($ou) {
         Write-Host "✓ OU already exists: $Name"
         return $ou.DistinguishedName
-    } catch {
-        if ($_.Exception.Message -match "Cannot find") {
-            try {
-                New-ADOrganizationalUnit -Name $Name -Path $Path -ProtectedFromAccidentalDeletion $true -ErrorAction Stop
-                Write-Host "✓ Created OU: $Name"
-                return "OU=$Name,$Path"
-            } catch {
-                Write-Error "Failed to create OU '$Name' at '$Path': $_"
-                throw $_
-            }
-        } else {
-            Write-Error "Error searching for OU '$Name': $_"
+    } else {
+        try {
+            New-ADOrganizationalUnit -Name $Name -Path $Path -ProtectedFromAccidentalDeletion $true -ErrorAction Stop
+            Write-Host "✓ Created OU: $Name"
+            # Query AD immediately to ensure we get the actual DistinguishedName
+            $newOU = Get-ADOrganizationalUnit -Filter {Name -eq $Name} -SearchBase $Path
+            return $newOU.DistinguishedName
+        } catch {
+            Write-Error "Failed to create OU '$Name' at '$Path': $_"
             throw $_
         }
     }
