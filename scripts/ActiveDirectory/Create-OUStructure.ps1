@@ -2,7 +2,6 @@
 
 # Configuration
 $config = @{
-    DomainName = "prutl.internal"
     OuBase = "DC=prutl,DC=internal"
     OuCompany = "PRUTL"
 }
