@@ -3,13 +3,151 @@ hostname SW01
 no ip domain lookup
 banner motd "Unauthorized access is prohibited"
 service password-encryption
-username cisco secret cisco
+username cisco privilege 15 secret cisco
+ip routing
 
-int vlan 99
-ip address 10.0.99.1 255.255.255.0
+
+
+vlan 10
+name Server
 exit
 
-ip domain-name example.com
+vlan 20
+name Klient
+exit
+
+vlan 99
+name Management
+exit
+
+vlan 110
+name Server
+exit
+
+vlan 120
+name Klient
+exit
+
+vlan 199
+name Management
+exit
+
+vlan 210
+name Server
+exit
+
+vlan 220
+name Klient
+exit
+
+vlan 299
+name Management
+exit
+
+vlan 666
+name Native
+exit
+
+no int vlan 10
+
+
+no int vlan 20
+
+int vlan 99
+ip address 10.0.99.2 255.255.255.0
+exit
+
+no int vlan 110
+
+
+no int vlan 120
+
+
+no int vlan 199
+
+
+no int vlan 210
+
+
+no int vlan 220
+
+
+no int vlan 299
+
+
+int g1/0/1
+description HQ-PVE-01 BMC
+switchport mode access
+switchport access vlan 99
+exit
+
+int g1/0/2
+description HQ-PVE-01
+switchport trunk encapsulation dot1q
+switchport mode trunk
+switchport trunk allowed vlan 10,20,99
+switchport trunk native vlan 99
+exit
+
+int g1/0/3
+description HQ-PVE-02 BMC
+switchport mode access
+switchport access vlan 99
+exit
+
+int g1/0/4
+description HQ-PVE-02
+switchport trunk encapsulation dot1q
+switchport mode trunk
+switchport trunk allowed vlan 10,20,99
+switchport trunk native vlan 99
+exit
+
+int g1/0/5
+description HQ-PVE-03 BMC
+switchport mode access
+switchport access vlan 99
+exit
+
+int g1/0/6
+description HQ-PVE-03
+switchport trunk encapsulation dot1q
+switchport mode trunk
+switchport trunk allowed vlan 10,20,99
+switchport trunk native vlan 99
+exit
+
+default int g1/0/10
+
+int g1/0/10
+description Uplink to Router
+switchport trunk encapsulation dot1q
+switchport mode trunk
+switchport trunk allowed vlan 10,20,99,110,120,199,210,220,299
+switchport trunk native vlan 666
+exit
+
+int g1/0/48
+description Uplink to SW02
+switchport trunk encapsulation dot1q
+switchport mode trunk
+switchport trunk allowed vlan 10,20,99,110,120,199,210,220,299
+switchport trunk native vlan 666
+exit
+
+no access-list 1 permit 10.0.10.0 0.0.0.255
+no access-list 1 permit 10.0.20.0 0.0.0.255
+no access-list 1 permit 10.0.99.0 0.0.0.255
+no access-list 1 permit 10.10.10.0 0.0.0.255
+no access-list 1 permit 10.10.20.0 0.0.0.255
+no access-list 1 permit 10.0.199.0 0.0.0.255
+no access-list 1 permit 10.20.10.0 0.0.0.255
+no access-list 1 permit 10.20.20.0 0.0.0.255
+no access-list 1 permit 10.0.299.0 0.0.0.255
+
+no ip nat inside source list 1 interface GigabitEthernet1/0/10 overload
+
+ip domain-name prutl.internal
 crypto key generate rsa general-keys modulus 1024
 ip ssh version 2
 line vty 0 4
