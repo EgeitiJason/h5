@@ -71,7 +71,7 @@ function New-OUHierarchy {
         
         [Parameter(Mandatory = $true)]
         [hashtable]$Node
-        )
+    )
         
     # Create or get this node's OU
     $currentPath = New-OUIfNotExists -Name $Node.Name -Path $ParentPath
