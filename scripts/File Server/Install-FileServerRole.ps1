@@ -1,2 +1,6 @@
 # Install the File Server role on the server
-Install-WindowsFeature -Name FS-FileServer -IncludeManagementTools
+if (-not (Get-WindowsFeature -Name FS-FileServer).Installed) {
+    Install-WindowsFeature -Name FS-FileServer -IncludeManagementTools
+} else {
+    Write-Host "✓ File Server role is already installed."
+}
