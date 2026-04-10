@@ -23,6 +23,8 @@ interface GigabitEthernet0/0/1.10
 interface GigabitEthernet0/0/1.20
  encapsulation dot1Q 20
  ip address 10.0.20.1 255.255.255.0
+ ip helper-address 10.0.10.13
+ ip helper-address 10.0.10.14
  ip nat inside
 
 interface GigabitEthernet0/0/1.99
@@ -38,6 +40,8 @@ interface GigabitEthernet0/0/1.110
 interface GigabitEthernet0/0/1.120
  encapsulation dot1Q 120
  ip address 10.10.20.1 255.255.255.0
+ ip helper-address 10.0.10.13
+ ip helper-address 10.0.10.14
  ip nat inside
 
 interface GigabitEthernet0/0/1.199
@@ -53,6 +57,8 @@ interface GigabitEthernet0/0/1.210
 interface GigabitEthernet0/0/1.220
  encapsulation dot1Q 220
  ip address 10.20.20.1 255.255.255.0
+ ip helper-address 10.0.10.13
+ ip helper-address 10.0.10.14
  ip nat inside
 
 interface GigabitEthernet0/0/1.299
