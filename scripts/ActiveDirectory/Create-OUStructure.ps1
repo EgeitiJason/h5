@@ -1,50 +1,40 @@
 #Requires -Modules ActiveDirectory
 
 # Configuration
-$config = @{
-    OuBase = "DC=prutl,DC=internal"
-    OuCompany = "PRUTL"
-}
+$OUBase = "DC=prutl,DC=internal" # Base OU path - modify as needed
 
 # Define OU hierarchy - modify this structure to change OUs
 $ouStructure = @(
     @{
-        Name = "Computers"
-        Children = @()
-    },
-    @{
-        Name = "Groups"
+        Name = "PRUTL"
         Children = @(
-            @{ Name = "Apps" },
-            @{ Name = "Fileshares" }
-        )
-    },
-    @{
-        Name = "Servers"
-        Children = @()
-    },
-    @{
-        Name = "Users"
-        Children = @(
-            @{ Name = "Admin" },
-            @{ Name = "Service Accounts" }
+            @{
+                Name = "Computers"
+                Children = @()
+            },
+            @{
+                Name = "Groups"
+                Children = @(
+                    @{ Name = "Apps" },
+                    @{ Name = "Fileshares" }
+                )
+            },
+            @{
+                Name = "Servers"
+                Children = @()
+            },
+            @{
+                Name = "Users"
+                Children = @(
+                    @{ Name = "Admin" },
+                    @{ Name = "Service Accounts" }
+                )
+            }
         )
     }
 )
 
-<#
-.SYNOPSIS
-Creates an OU if it doesn't exist, or returns the path if it does.
 
-.PARAMETER Name
-The name of the OU to create.
-
-.PARAMETER Path
-The distinguished name (DN) path where the OU should be created.
-
-.OUTPUTS
-Returns the distinguished name of the created or existing OU.
-#>
 function New-OUIfNotExists {
     param(
         [Parameter(Mandatory = $true)]
@@ -73,32 +63,22 @@ function New-OUIfNotExists {
     }
 }
 
-# Main execution
-Write-Host "=== Creating Active Directory OU Structure ===" -ForegroundColor Cyan
-
-# Ensure company OU exists and capture its distinguished name
-try {
-    $companyPath = New-OUIfNotExists -Name $config.OuCompany -Path $config.OuBase
-} catch {
-    Write-Error "Failed to create company OU. Exiting."
-    exit 1
-}
 
 function New-OUHierarchy {
     param(
         [Parameter(Mandatory = $true)]
         [string]$ParentPath,
-
+        
         [Parameter(Mandatory = $true)]
         [hashtable]$Node
-    )
-
+        )
+        
     # Create or get this node's OU
     $currentPath = New-OUIfNotExists -Name $Node.Name -Path $ParentPath
     if (-not $currentPath) {
         throw "Failed to create or retrieve OU '$($Node.Name)' under '$ParentPath'"
     }
-
+    
     # Recurse into children (supports unlimited depth)
     if ($Node.Children -and $Node.Children.Count -gt 0) {
         foreach ($child in $Node.Children) {
@@ -107,10 +87,14 @@ function New-OUHierarchy {
     }
 }
 
+
+# Main execution
+Write-Host "=== Creating Active Directory OU Structure ===" -ForegroundColor Cyan
+
 # Create all OUs recursively
 foreach ($ou in $ouStructure) {
     try {
-        New-OUHierarchy -ParentPath $companyPath -Node $ou
+        New-OUHierarchy -ParentPath $OUBase -Node $ou
     } catch {
         Write-Error "Failed to create OU '$($ou.Name)': $_"
     }
