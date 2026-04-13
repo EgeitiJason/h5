@@ -35,9 +35,10 @@ if ($computerName -ne '$Hostname01') {
     if ($null -eq $networkConfig) {
         netsh interface ipv4 set interface $InterfaceIndex dadtransmits=0 store=persistent
         New-NetIPAddress –IPAddress $IPAddress -DefaultGateway $Gateway01 -PrefixLength $Prefix -InterfaceIndex $InterfaceIndex
-        Set-DNSClientServerAddress –InterfaceIndex $InterfaceIndex –ServerAddresses $IPAddress
+        Set-DNSClientServerAddress –InterfaceIndex $InterfaceIndex –ServerAddresses $DNSForworder
         Disable-NetAdapterBinding -Name $InterfaceName -ComponentID 'ms_tcpip6'
     }
+
 
     # Check if the time zone is already set to "Romance Standard Time"
     $timeZone = Get-TimeZone
