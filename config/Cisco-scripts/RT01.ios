@@ -13,6 +13,8 @@ interface GigabitEthernet0/0/0
 
 interface GigabitEthernet0/0/1
  description Inside
+ hold-queue 240000 out
+ hold-queue 240000 in
  no shutdown
 
 interface GigabitEthernet0/0/1.10
