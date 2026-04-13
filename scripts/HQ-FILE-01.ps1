@@ -29,7 +29,6 @@ if ($computerName -ne '$Hostname01') {
     Write-Host "Administrator user password set."=
     }
 
-    Add-Computer -DomainName $DomainName -OUPath "OU=Servers,OU=PRUTL,DC=prutl,DC=internal" -Credential $Credential -Restart
     
     # Check if the network configuration is already set
     $networkConfig = Get-NetIPAddress | Where-Object { $_.IPAddress -eq $IPAddress }
@@ -62,6 +61,8 @@ if ($computerName -ne '$Hostname01') {
     if ($rdpFirewallRule.Enabled -eq 'False') {
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
     }
+
+    Add-Computer -DomainName $DomainName -OUPath "OU=Servers,OU=PRUTL,DC=prutl,DC=internal" -Credential $Credential -Restart
 
     # After all configurations, restart the computer
     Restart-Computer
