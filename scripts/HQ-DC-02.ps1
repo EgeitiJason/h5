@@ -3,13 +3,13 @@ $InterfaceIndex = (Get-NetAdapter).InterfaceIndex
 $InterfaceName = (Get-NetAdapter).Name
 $DomainName = "prutl.internal"
 $NetworkID = "10.0.10"   
-$IPAddress = "10.0.10.15"
+$IPAddress = "10.0.10.11"
 $Gateway01 = "10.0.10.1"
 $DNSForworder = "10.142.12.2"
 $StartRange = "101"
 $EndRange = "199"
 $SubnetMask = "255.255.255.0"
-$Hostname01 = "HQ-FILE-01"
+$Hostname01 = "HQ-DC-02"
 $Reverselookup = "10.0.10.in-addr.arpa"
 $Prefix = "24"
 $NetworkIDPrefix = "$NetworkID.0/$Prefix"
@@ -29,7 +29,6 @@ if ($computerName -ne '$Hostname01') {
     Write-Host "Administrator user password set."=
     }
 
-    
     # Check if the network configuration is already set
     $networkConfig = Get-NetIPAddress | Where-Object { $_.IPAddress -eq $IPAddress }
     if ($null -eq $networkConfig) {
@@ -38,7 +37,6 @@ if ($computerName -ne '$Hostname01') {
         Set-DNSClientServerAddress –InterfaceIndex $InterfaceIndex –ServerAddresses $DNSForworder
         Disable-NetAdapterBinding -Name $InterfaceName -ComponentID 'ms_tcpip6'
     }
-
 
     # Check if the time zone is already set to "Romance Standard Time"
     $timeZone = Get-TimeZone
@@ -62,9 +60,10 @@ if ($computerName -ne '$Hostname01') {
     if ($rdpFirewallRule.Enabled -eq 'False') {
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
     }
-
+    
+    {
     Add-Computer -DomainName $DomainName -OUPath "OU=Servers,OU=PRUTL,DC=prutl,DC=internal" -Credential $Credential -Restart
-
+    }
     # After all configurations, restart the computer
     Restart-Computer
 } else {
@@ -147,3 +146,4 @@ Get-Disk | Where-Object { $_.PartitionStyle -eq "RAW" } | ForEach-Object `
     $null = Format-Volume -DriveLetter "$Driveletter" -FileSystem NTFS -Confirm:$false
     Write-Host "Initilizing unallocated disk to Driveletter ${Driveletter}:"
 }
+
