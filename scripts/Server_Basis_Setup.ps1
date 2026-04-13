@@ -37,17 +37,6 @@ $tsConnections = Get-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\
 if ($tsConnections.fDenyTSConnections -ne 0) {
     Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
 }
-
-$rdpAuthentication = Get-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication"
-if ($rdpAuthentication.UserAuthentication -ne 1) {
-    Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
-}
-
-# Check if the Remote Desktop firewall rule is already enabled
-$rdpFirewallRule = Get-NetFirewallRule -DisplayGroup "Remote Desktop"
-if ($rdpFirewallRule.Enabled -eq 'False') {
-    Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-}
     
 if ((Get-WmiObject -Class Win32_ComputerSystem).Domain -eq "WORKGROUP") {
     Add-Computer -DomainName $DomainName -OUPath "OU=Servers,OU=PRUTL,DC=prutl,DC=internal" -Credential $Credential -Restart
@@ -78,9 +67,6 @@ Get-Disk | Where-Object { $_.PartitionStyle -eq "RAW" } | ForEach-Object `
     Write-Host "Initilizing unallocated disk to Driveletter ${Driveletter}:"
 }
 
-# Add local computer to domain
-Add-Computer -DomainName $DomainName -Credential $Credential -Restart
-
-#deletee the scheduled task after it has run
+#delete the scheduled task after it has run
 $taskName = "Server_Basis_Setup"
 Unregister-ScheduledTask -TaskName $taskName -Confirm:$false
