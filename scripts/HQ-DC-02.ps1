@@ -30,11 +30,11 @@ if ($computerName -ne '$Hostname01') {
     }
 
     # Check if the network configuration is already set
-    $networkConfig = Get-NetIPAddress | Where-Object { $_.IPAddress -eq $DNSServer01 }
+    $networkConfig = Get-NetIPAddress | Where-Object { $_.IPAddress -eq $IPAddress }
     if ($null -eq $networkConfig) {
         netsh interface ipv4 set interface $InterfaceIndex dadtransmits=0 store=persistent
-        New-NetIPAddress –IPAddress $DNSServer01 -DefaultGateway $Gateway01 -PrefixLength $Prefix -InterfaceIndex $InterfaceIndex
-        Set-DNSClientServerAddress –InterfaceIndex $InterfaceIndex –ServerAddresses $DNSServer01
+        New-NetIPAddress –IPAddress $IPAddress -DefaultGateway $Gateway01 -PrefixLength $Prefix -InterfaceIndex $InterfaceIndex
+        Set-DNSClientServerAddress –InterfaceIndex $InterfaceIndex –ServerAddresses $DNSForworder
         Disable-NetAdapterBinding -Name $InterfaceName -ComponentID 'ms_tcpip6'
     }
 
