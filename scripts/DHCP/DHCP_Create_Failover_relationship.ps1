@@ -1,0 +1,2 @@
+#Create failover relationship between the two DHCP servers
+Add-DhcpServerv4Failover -ComputerName HQ-DHCP-01 -PartnerServer HQ-DHCP-02 -Name dhcp1-dhcp2 -ScopeID 10.0.20.0 -LoadBalancePercent 50 -SharedSecret "Password1!" -Force
