@@ -27,6 +27,15 @@ $ouStructure = @(
                 Name = "Users"
                 Children = @(
                     @{ Name = "Admin" },
+                    @{ 
+                        Name = "Administration" 
+                        Children = @(
+                            @{ Name = "IT" },
+                            @{ Name = "HR" },
+                            @{ Name = "Finans" }
+                        )
+                    },
+                    @{ Name = "Lager" },
                     @{ Name = "Service Accounts" }
                 )
             }
