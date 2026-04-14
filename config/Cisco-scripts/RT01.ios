@@ -5,6 +5,8 @@ banner motd "Unauthorized access is prohibited"
 service password-encryption
 username cisco privilege 15 secret cisco
 
+platform hardware throughput level 300000
+
 interface GigabitEthernet0/0/0
  description Outside
  ip nat outside
@@ -13,6 +15,8 @@ interface GigabitEthernet0/0/0
 
 interface GigabitEthernet0/0/1
  description Inside
+ hold-queue 240000 out
+ hold-queue 240000 in
  no shutdown
 
 interface GigabitEthernet0/0/1.10
