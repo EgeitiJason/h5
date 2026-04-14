@@ -40,18 +40,17 @@ if ($tsConnections.fDenyTSConnections -ne 0) {
     
 if ((Get-WmiObject -Class Win32_ComputerSystem).Domain -eq "WORKGROUP") {
     Add-Computer -DomainName $DomainName -OUPath "OU=Servers,OU=PRUTL,DC=prutl,DC=internal" -Credential $Credential -Restart
-# After all configurations, restart the computer
-Restart-Computer
+    # After all configurations, restart the computer
+    Restart-Computer
 }
 
+# Set CD/DVD Drives to the last available drive letter, starting from 'Z' and moving backwards:
+Get-CimInstance -ClassName Win32_Volume -Filter "DriveType = '5'" | ForEach-Object {
+    $usedDrives = Get-Volume | Select-Object -ExpandProperty DriveLetter | Where-Object { $_ -ne $null }
+    $Driveletter = $possibleDrives | Where-Object { $_ -notin $usedDrives } | Select-Object -Last 1
 
-# Set CD/DVD Drive to Z:
-$cd = $null
-$cd = Get-WmiObject -Class Win32_CDROMDrive -ComputerName $env:COMPUTERNAME -ErrorAction Stop 
-if ($cd.Drive -eq "D:") {
-    Write-Host "Changing CD Drive letter from D: to Z:"
-    $null = Set-WmiInstance -InputObject (Get-WmiObject -Class Win32_volume -Filter "DriveLetter = 'd:'") -Arguments @{DriveLetter = 'z:' }
-} 
+    $_ | Set-CimInstance -Property @{ DriveLetter = "$($Driveletter):"}
+}
 
 # Get the offline disk
 Get-Disk | Where-Object { $_.PartitionStyle -eq "RAW" } | ForEach-Object `

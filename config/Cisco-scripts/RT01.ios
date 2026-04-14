@@ -5,71 +5,67 @@ banner motd "Unauthorized access is prohibited"
 service password-encryption
 username cisco privilege 15 secret cisco
 
-platform hardware throughput level 300000
-
-interface GigabitEthernet0/0/0
+interface GigabitEthernet0/0
  description Outside
  ip nat outside
  ip address dhcp
  no shutdown
 
-interface GigabitEthernet0/0/1
+interface GigabitEthernet0/1
  description Inside
- hold-queue 240000 out
- hold-queue 240000 in
  no shutdown
 
-interface GigabitEthernet0/0/1.10
+interface GigabitEthernet0/1.10
  encapsulation dot1Q 10
  ip address 10.0.10.1 255.255.255.0
  ip nat inside
 
-interface GigabitEthernet0/0/1.20
+interface GigabitEthernet0/1.20
  encapsulation dot1Q 20
  ip address 10.0.20.1 255.255.255.0
  ip helper-address 10.0.10.13
  ip helper-address 10.0.10.14
  ip nat inside
 
-interface GigabitEthernet0/0/1.99
+interface GigabitEthernet0/1.99
  encapsulation dot1Q 99
  ip address 10.0.99.1 255.255.255.0
  ip helper-address 10.0.10.13
  ip helper-address 10.0.10.14
  ip nat inside
 
-interface GigabitEthernet0/0/1.110
+interface GigabitEthernet0/1.110
  encapsulation dot1Q 110
  ip address 10.10.10.1 255.255.255.0
  ip nat inside
 
-interface GigabitEthernet0/0/1.120
+interface GigabitEthernet0/1.120
  encapsulation dot1Q 120
  ip address 10.10.20.1 255.255.255.0
  ip helper-address 10.0.10.13
  ip helper-address 10.0.10.14
  ip nat inside
 
-interface GigabitEthernet0/0/1.199
+interface GigabitEthernet0/1.199
  encapsulation dot1Q 199
  ip address 10.10.99.1 255.255.255.0
  ip helper-address 10.0.10.13
  ip helper-address 10.0.10.14
  ip nat inside
 
-interface GigabitEthernet0/0/1.210
+interface GigabitEthernet0/1.210
  encapsulation dot1Q 210
  ip address 10.20.10.1 255.255.255.0
  ip nat inside
 
-interface GigabitEthernet0/0/1.220
+interface GigabitEthernet0/1.220
  encapsulation dot1Q 220
  ip address 10.20.20.1 255.255.255.0
  ip helper-address 10.0.10.13
  ip helper-address 10.0.10.14
  ip nat inside
 
-interface GigabitEthernet0/0/1.299
+interface GigabitEthernet0/1.299
  encapsulation dot1Q 299
  ip address 10.20.99.1 255.255.255.0
  ip helper-address 10.0.10.13
@@ -87,9 +83,9 @@ access-list 1 permit 10.20.10.0 0.0.0.255
 access-list 1 permit 10.20.20.0 0.0.0.255
 access-list 1 permit 10.20.99.0 0.0.0.255
 
-ip nat inside source list 1 interface GigabitEthernet0/0/0 overload
+ip nat inside source list 1 interface GigabitEthernet0/0 overload
 
-ip route 0.0.0.0 0.0.0.0 GigabitEthernet0/0/0
+ip route 0.0.0.0 0.0.0.0 GigabitEthernet0/0
 
 ip domain-name prutl.internal
 crypto key generate rsa general-keys modulus 1024
