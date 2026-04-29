@@ -1,0 +1,98 @@
+hostname NETSEC-ASA
+domain-name example.com
+passwd cisco
+!
+interface GigabitEthernet1/1
+ nameif OUTSIDE
+ security-level 0
+ ip address 209.165.200.226 255.255.255.248
+ no shutdown 
+!
+interface GigabitEthernet1/2
+ nameif INSIDE
+ security-level 100
+ ip address 192.168.1.1 255.255.255.0 
+ no shutdown 
+!
+domain-name example.com
+!
+http server enable
+http 192.168.1.0 255.255.255.0 INSIDE
+! 
+end
+write mem
+
+
+
+! Part 2
+!Step 1
+! c
+
+route OUTSIDE 0.0.0.0 0.0.0.0 209.165.200.225
+
+! Step 2
+object network INSIDE-NET
+    subnet 192.168.1.0 255.255.255.0
+    nat (INSIDE,OUTSIDE) dynamic interface
+    end
+
+! Step 3
+! b
+configure terminal
+policy-map global_policy
+ class inspection_default
+  inspect icmp
+
+! Part 3
+! Step 1
+! a
+exit
+exit
+dhcpd address 192.168.1.5-192.168.1.100 INSIDE
+! b
+dhcpd dns 209.165.201.2
+dhcpd option 3 ip 192.168.1.1
+
+! c
+dhcpd enable INSIDE
+
+! Step 2
+! a
+username admin password cisco12345
+
+! b
+aaa authentication ssh console LOCAL
+
+! Step 3
+
+! a
+crypto key generate rsa modulus 2048
+! b
+wr mem
+
+! c
+ssh 192.168.1.0 255.255.255.0 INSIDE
+ssh 172.16.3.3 255.255.255.255 OUTSIDE
+ssh timeout 10
+
+! Part 4
+! Step 1
+! a
+int g1/3
+ip address 192.168.2.1 255.255.255.0
+nameif DMZ
+security-level 70
+no shut
+end
+
+! Step 2
+configure terminal
+object network DMZ-SERVER
+    host 192.168.2.3
+    nat (DMZ,OUTSIDE) static 209.165.200.227
+    exit
+
+! Step 3
+access-list OUTSIDE_DMZ permit ip any host 192.168.2.3
+access-group OUTSIDE_DMZ in interface OUTSIDE
+
