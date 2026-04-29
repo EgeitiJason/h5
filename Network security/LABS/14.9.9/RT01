@@ -1,0 +1,43 @@
+hostname RT01
+
+no ip domain lookup
+banner motd "Unauthorized access is prohibited"
+service password-encryption
+username cisco secret cisco
+
+
+int g0/0/1
+ip address 192.168.1.1 255.255.255.0
+no shut
+exit
+
+ip domain-name example.com
+crypto key generate rsa general-keys modulus 1024
+ip ssh version 2
+
+line vty 0 4
+password cisco
+transport input ssh
+login local
+
+line console 0
+password cisco
+login
+end
+
+wr
+
+!Part 1
+!step 2
+!configure basic settings on RT01
+no ip http server
+no ip http secure-server
+
+enable algorithm-type scrypt secret cisco12345
+
+line con 0
+logging synchronous
+exit
+
+!Part 4
+!Step 1 record RT01 g0/0/1 MAC Address
