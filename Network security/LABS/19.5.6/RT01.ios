@@ -1,0 +1,74 @@
+hostname RT01
+
+no ip domain lookup
+banner motd "Unauthorized access is prohibited"
+service password-encryption
+username cisco algorithm-type scrypt secret cisco
+
+int g0/0/0
+ip address 10.1.1.1 255.255.255.252
+no shut
+
+int g0/0/1
+ip address 192.168.1.1 255.255.255.0
+no shut
+exit
+
+ip domain-name example.com
+crypto key generate rsa general-keys modulus 1024
+ip ssh version 2
+
+line vty 0 4
+password cisco
+transport input ssh
+login local
+
+line console 0
+password cisco
+login
+end
+
+wr
+
+!Step 3 
+! a - d
+conf t 
+router ospf 1
+network 192.168.1.0 0.0.0.255 area 0
+network 10.1.1.0 0.0.0.3 area 0
+
+!step 7
+security passwords min-length 10
+
+!part 2
+!step 1
+crypto isakmp enable
+
+crypto isakmp policy 10
+hash sha
+auth pre-share
+group 24
+lifetime 3600
+encryp aes 256
+
+!step 3
+crypto isakmp key cisco123 address 10.2.2.1
+
+!step 4
+crypto ipsec transform-set R1-R3 esp-aes 256 esp-sha-hmac
+
+crypto ipsec security-association lifetime seconds 1800
+
+!step 5
+access-list 101 permit ip 192.168.1.0 0.0.0.255 192.168.3.0 0.0.0.255
+
+!step 6
+crypto map CMAP 10 ipsec-isakmp
+match address 101
+set peer 10.2.2.1
+set pfs group24
+set transform-set R1-R3
+set security-association lifetime seconds 900
+
+int g0/0/0
+crypto map CMAP
