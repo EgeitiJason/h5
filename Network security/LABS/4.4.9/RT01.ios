@@ -1,0 +1,30 @@
+hostname RT01
+
+no ip domain lookup
+banner motd "Unauthorized access is prohibited"
+service password-encryption
+username cisco secret cisco
+username admin algorithm-type sha256 secret Adm1nP@55
+
+
+int g0/1
+ip address 192.168.1.1 255.255.255.0
+no shut
+
+enable algorithm-type sha256 secret cisco
+
+ip domain-name example.com
+crypto key generate rsa general-keys modulus 1024
+ip ssh version 2
+
+line vty 0 4
+password cisco
+transport input ssh
+login local
+
+line console 0
+password cisco
+login
+end
+
+wr
