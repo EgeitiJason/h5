@@ -25,7 +25,7 @@ vlan 1030
 ! Access ports on VLAN 99 (management)
 ! ============================================================
 interface Port-channel1
- description LAGG to HQ-FW-01 (OPNsense-A)
+ description LAGG to HQ-FW-01
  switchport mode access
  switchport access vlan 99
  spanning-tree portfast
@@ -35,7 +35,7 @@ interface Port-channel1
  storm-control action shutdown
 !
 interface Port-channel2
- description LAGG to HQ-FW-02 (OPNsense-B)
+ description LAGG to HQ-FW-02
  switchport mode access
  switchport access vlan 99
  spanning-tree portfast
@@ -44,29 +44,15 @@ interface Port-channel2
  storm-control multicast level 5.00
  storm-control action shutdown
 !
-interface GigabitEthernet1/0/48
+interface GigabitEthernet1/0/48, GigabitEthernet2/0/48
  description HQ-FW-01 member of Po1
  switchport mode access
  switchport access vlan 99
  channel-protocol lacp
  channel-group 1 mode active
 !
-interface GigabitEthernet2/0/48
- description HQ-FW-01 member of Po1 (stack member 2)
- switchport mode access
- switchport access vlan 99
- channel-protocol lacp
- channel-group 1 mode active
-!
-interface GigabitEthernet1/0/47
+interface GigabitEthernet1/0/47, GigabitEthernet2/0/47
  description HQ-FW-02 member of Po2
- switchport mode access
- switchport access vlan 99
- channel-protocol lacp
- channel-group 2 mode active
-!
-interface GigabitEthernet2/0/47
- description HQ-FW-02 member of Po2 (stack member 2)
  switchport mode access
  switchport access vlan 99
  channel-protocol lacp
@@ -102,7 +88,7 @@ interface Port-channel12
  storm-control broadcast level 1.00
  storm-control action shutdown
 !
-interface GigabitEthernet1/0/1
+interface GigabitEthernet1/0/1, GigabitEthernet2/0/1
  description HQ-PVE-01 VM+Mgmt member of Po10
  switchport trunk encapsulation dot1q
  switchport mode trunk
@@ -111,38 +97,15 @@ interface GigabitEthernet1/0/1
  channel-protocol lacp
  channel-group 10 mode active
 !
-interface GigabitEthernet2/0/1
- description HQ-PVE-01 VM+Mgmt member of Po10 (stack member 2)
- switchport trunk encapsulation dot1q
- switchport mode trunk
- switchport trunk native vlan 99
- switchport trunk allowed vlan 10,20,99
- channel-protocol lacp
- channel-group 10 mode active
-!
-interface GigabitEthernet1/0/2
+interface GigabitEthernet1/0/2, GigabitEthernet2/0/2
  description HQ-PVE-01 Ceph member of Po11
  switchport mode access
  switchport access vlan 1000
  channel-protocol lacp
  channel-group 11 mode active
 !
-interface GigabitEthernet2/0/2
- description HQ-PVE-01 Ceph member of Po11 (stack member 2)
- switchport mode access
- switchport access vlan 1000
- channel-protocol lacp
- channel-group 11 mode active
-!
-interface GigabitEthernet1/0/3
+interface GigabitEthernet1/0/3, GigabitEthernet2/0/3
  description HQ-PVE-01 Migration member of Po12
- switchport mode access
- switchport access vlan 1010
- channel-protocol lacp
- channel-group 12 mode active
-!
-interface GigabitEthernet2/0/3
- description HQ-PVE-01 Migration member of Po12 (stack member 2)
  switchport mode access
  switchport access vlan 1010
  channel-protocol lacp
@@ -191,7 +154,7 @@ interface Port-channel22
  storm-control broadcast level 1.00
  storm-control action shutdown
 !
-interface GigabitEthernet1/0/5
+interface GigabitEthernet1/0/5, GigabitEthernet2/0/5
  description HQ-PVE-02 VM+Mgmt member of Po20
  switchport trunk encapsulation dot1q
  switchport mode trunk
@@ -200,38 +163,15 @@ interface GigabitEthernet1/0/5
  channel-protocol lacp
  channel-group 20 mode active
 !
-interface GigabitEthernet2/0/5
- description HQ-PVE-02 VM+Mgmt member of Po20 (stack member 2)
- switchport trunk encapsulation dot1q
- switchport mode trunk
- switchport trunk native vlan 99
- switchport trunk allowed vlan 10,20,99
- channel-protocol lacp
- channel-group 20 mode active
-!
-interface GigabitEthernet1/0/6
+interface GigabitEthernet1/0/6, GigabitEthernet2/0/6
  description HQ-PVE-02 Ceph member of Po21
  switchport mode access
  switchport access vlan 1000
  channel-protocol lacp
  channel-group 21 mode active
 !
-interface GigabitEthernet2/0/6
- description HQ-PVE-02 Ceph member of Po21 (stack member 2)
- switchport mode access
- switchport access vlan 1000
- channel-protocol lacp
- channel-group 21 mode active
-!
-interface GigabitEthernet1/0/7
+interface GigabitEthernet1/0/7, GigabitEthernet2/0/7
  description HQ-PVE-02 Migration member of Po22
- switchport mode access
- switchport access vlan 1010
- channel-protocol lacp
- channel-group 22 mode active
-!
-interface GigabitEthernet2/0/7
- description HQ-PVE-02 Migration member of Po22 (stack member 2)
  switchport mode access
  switchport access vlan 1010
  channel-protocol lacp
@@ -280,7 +220,7 @@ interface Port-channel32
  storm-control broadcast level 1.00
  storm-control action shutdown
 !
-interface GigabitEthernet1/0/9
+interface GigabitEthernet1/0/9, GigabitEthernet2/0/9
  description HQ-PVE-03 VM+Mgmt member of Po30
  switchport trunk encapsulation dot1q
  switchport mode trunk
@@ -289,38 +229,15 @@ interface GigabitEthernet1/0/9
  channel-protocol lacp
  channel-group 30 mode active
 !
-interface GigabitEthernet2/0/9
- description HQ-PVE-03 VM+Mgmt member of Po30 (stack member 2)
- switchport trunk encapsulation dot1q
- switchport mode trunk
- switchport trunk native vlan 99
- switchport trunk allowed vlan 10,20,99
- channel-protocol lacp
- channel-group 30 mode active
-!
-interface GigabitEthernet1/0/10
+interface GigabitEthernet1/0/10, GigabitEthernet2/0/10
  description HQ-PVE-03 Ceph member of Po31
  switchport mode access
  switchport access vlan 1000
  channel-protocol lacp
  channel-group 31 mode active
 !
-interface GigabitEthernet2/0/10
- description HQ-PVE-03 Ceph member of Po31 (stack member 2)
- switchport mode access
- switchport access vlan 1000
- channel-protocol lacp
- channel-group 31 mode active
-!
-interface GigabitEthernet1/0/11
+interface GigabitEthernet1/0/11, GigabitEthernet2/0/11
  description HQ-PVE-03 Migration member of Po32
- switchport mode access
- switchport access vlan 1010
- channel-protocol lacp
- channel-group 32 mode active
-!
-interface GigabitEthernet2/0/11
- description HQ-PVE-03 Migration member of Po32 (stack member 2)
  switchport mode access
  switchport access vlan 1010
  channel-protocol lacp
@@ -352,17 +269,8 @@ interface Port-channel40
  storm-control broadcast level 1.00
  storm-control action shutdown
 !
-interface GigabitEthernet1/0/45
+interface GigabitEthernet1/0/45, GigabitEthernet2/0/45
  description HQ-ACCESS-01 member of Po40
- switchport trunk encapsulation dot1q
- switchport mode trunk
- switchport trunk native vlan 99
- switchport trunk allowed vlan 10,20,99
- channel-protocol lacp
- channel-group 40 mode active
-!
-interface GigabitEthernet2/0/45
- description HQ-ACCESS-01 member of Po40 (stack member 2)
  switchport trunk encapsulation dot1q
  switchport mode trunk
  switchport trunk native vlan 99
@@ -375,23 +283,18 @@ interface GigabitEthernet2/0/45
 ! ============================================================
 interface Port-channel45
  description LAGG to Backup Server
- switchport mode access
- switchport access vlan 30
+ switchport mode trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk native vlan 99
+ switchport trunk allowed vlan 30
  spanning-tree portfast
  spanning-tree bpduguard enable
  storm-control broadcast level 1.00
  storm-control multicast level 5.00
  storm-control action shutdown
 !
-interface GigabitEthernet1/0/44
+interface GigabitEthernet1/0/44, GigabitEthernet2/0/44
  description Backup Server member of Po45
- switchport mode access
- switchport access vlan 30
- channel-protocol lacp
- channel-group 45 mode active
-!
-interface GigabitEthernet2/0/44
- description Backup Server member of Po45 (stack member 2)
  switchport mode access
  switchport access vlan 30
  channel-protocol lacp
@@ -408,15 +311,8 @@ interface Port-channel48
  storm-control broadcast level 1.00
  storm-control action shutdown
 !
-interface GigabitEthernet1/0/46
+interface GigabitEthernet1/0/46, GigabitEthernet2/0/46
  description HQ-OOB-01 member of Po48
- switchport mode access
- switchport access vlan 99
- channel-protocol lacp
- channel-group 48 mode active
-!
-interface GigabitEthernet2/0/46
- description HQ-OOB-01 member of Po48 (stack member 2)
  switchport mode access
  switchport access vlan 99
  channel-protocol lacp
