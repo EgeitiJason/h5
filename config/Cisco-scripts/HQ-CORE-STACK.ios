@@ -12,13 +12,13 @@ vlan 30
 vlan 99
  name MANAGEMENT
 vlan 1000
- name CEPH
+ name PVE-STORAGE
 vlan 1010
  name PVE-MIGRATION
 vlan 1020
- name COROSYNC-RING0
+ name PVE-COROSYNC-RING0
 vlan 1030
- name COROSYNC-RING1
+ name PVE-COROSYNC-RING1
 !
 ! ============================================================
 ! FIREWALLS - HQ-FW-01 (Po1) and HQ-FW-02 (Po2)
