@@ -3,13 +3,16 @@ configure terminal
 ! ============================================================
 ! Global configuration
 ! ============================================================
-hostname HQ-CORE-01
+hostname HQ-CORE-02
 !
 ! ============================================================
 ! Stack configuration
 ! ============================================================
 !
-switch 1 priority 15
+switch 2 renumber 2
+! reload the switch to apply the new stack number
+!
+switch 2 priority 14
 !
 end
 write memory
