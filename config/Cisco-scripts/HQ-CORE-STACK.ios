@@ -4,9 +4,9 @@ configure terminal
 ! VLAN definitions (create any that don't exist yet)
 ! ============================================================
 vlan 10
- name USERS
+ name SERVER
 vlan 20
- name VOICE
+ name CLIENT
 vlan 30
  name BACKUP
 vlan 99
