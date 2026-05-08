@@ -1,7 +1,7 @@
 #Ændre mappe rettigheder fra everyone til kun en Security Group "File-Administration"
 $folderPath = "E:\fortrolig"
 $acl = Get-Acl $folderPath
-$acl.SetAccessRuleProtection($true, $false) # tilføjer arve rettigheder
+$acl.SetAccessRuleProtection($true, $false) # fjerne arve rettigheder
 $acl.Access | ForEach-Object { $acl.RemoveAccessRule($_) } # Fjerner eksisterende rettigheder
 $inheritanceFlags = [System.Security.AccessControl.InheritanceFlags]::ContainerInherit -bor [System.Security.AccessControl.InheritanceFlags]::ObjectInherit
 $accessRule = [System.Security.AccessControl.FileSystemAccessRule]::new(
