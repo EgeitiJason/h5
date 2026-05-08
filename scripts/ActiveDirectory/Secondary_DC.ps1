@@ -12,7 +12,7 @@ $Credential = New-Object System.Management.Automation.PSCredential ($Username, $
 
 
 
-# Install ADDS and DNS, and rename default site to HQ
+# Install ADDS and join existing domain
 $CheckAD = Get-WindowsFeature -Name AD-Domain-Services
 if ($CheckAD.Installed -ne $true) {
     Write-Host "Installing AD-Domain-Services"

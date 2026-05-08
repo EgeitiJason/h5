@@ -1,0 +1,18 @@
+configure terminal
+!
+! ============================================================
+! Global configuration
+! ============================================================
+hostname HQ-CORE-02
+!
+! ============================================================
+! Stack configuration
+! ============================================================
+!
+switch 2 renumber 2
+! reload the switch to apply the new stack number
+!
+switch 2 priority 14
+!
+end
+write memory

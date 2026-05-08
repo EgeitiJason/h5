@@ -1,0 +1,45 @@
+hostname RT02
+
+no ip domain lookup
+banner motd "Unauthorized access is prohibited"
+service password-encryption
+username cisco secret cisco
+
+int g0/0/0
+ip address 10.1.1.2 255.255.255.252
+no shut
+
+int g0/0/1
+ip address 10.2.2.2 255.255.255.252
+no shut
+exit
+
+ip domain-name example.com
+crypto key generate rsa general-keys modulus 1024
+ip ssh version 2
+
+line vty 0 4
+password cisco
+transport input ssh
+login local
+
+line console 0
+password cisco
+login
+end
+
+wr
+
+!Part 2
+!step 1
+key chain NetAcad
+key 1
+key-string NetSeckeystring
+cryptographic-algorithm hmac-sha-256
+
+!step 2
+interface g0/1
+ip ospf authentication key-chain NetAcad
+interface g0/0
+ip ospf authentication key-chain NetAcad
+

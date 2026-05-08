@@ -1,0 +1,108 @@
+hostname SW01
+
+no ip domain lookup
+banner motd "Unauthorized access is prohibited"
+service password-encryption
+username cisco secret cisco
+
+int vlan 1
+ip address 192.168.1.2 255.255.255.0
+no shut
+exit
+
+ip domain-name example.com
+crypto key generate rsa general-keys modulus 1024
+ip ssh version 2
+line vty 0 4
+password cisco
+transport input ssh
+login local
+
+line console 0
+password cisco
+login
+
+
+end
+
+wr
+
+!Part 1
+!step 2
+!configure basic settings on SW01
+no ip http server
+no ip http secure-server
+
+enable algorithm-type scrypt secret cisco12345
+
+line con 0
+logging synchronous
+exit
+
+!Part 2
+!Step 1 configure SW01 as root switch
+spanning-tree vlan 1 priority 0
+exit
+
+!Step 2 configure trunk port on S1
+interface g1/0/1
+switchport trunk encapsulation dot1q
+switchport mode trunk
+
+!Step 3 change the native vlan to 99
+switchport trunk native vlan 99
+
+!Step 4 prevent use of DTP on S1
+int g1/0/1
+switchport nonegotiate
+
+!Step 7 disable trunk on S1 access ports
+interface g1/0/5
+switchport mode access
+interface g1/0/6
+switchport mode access
+
+!Part 3 protect against STP Attack
+!step 1 enable portfast
+interface g1/0/5
+spanning-tree portfast
+interface g1/0/6
+spanning-tree portfast
+
+!step 2 enable bpdu guard
+interface g1/0/6
+spanning-tree bpduguard enable
+
+!Part 4
+!Step 2configure basic port security on SW01
+interface g1/0/5
+shutdown
+switchport port-security
+switchport port-security mac-address 0cd0.f8c4.4f51
+no shutdown
+
+!step 5 remove basic port security configuration
+interface g1/0/5
+no switchport port-security
+no switchport port-security mac-address 0cd0.f8c4.4f51
+
+!Step 7 disable unused ports on SW01
+interface range g1/0/2-4, g1/0/7-52
+shut
+
+!Step 8 move active ports to a vlan other than the default
+vlan 20
+name users
+
+interface g1/0/6
+switchport access vlan 20
+
+!Step 9 configue port with the PVLAN edge port feature
+interface g1/0/6
+switchport protected
+interface g1/0/7
+switchport protected
+no shutdown
+
+int range g1/0/6-7
+no switchport protected

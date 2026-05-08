@@ -1,0 +1,62 @@
+hostname RT01
+
+no ip domain lookup
+banner motd "Unauthorized access is prohibited"
+service password-encryption
+username cisco secret cisco
+
+
+int g0/0/0
+ip address 10.1.1.1 255.255.255.252
+no shut
+
+int g0/0/1
+ip address 192.168.1.1 255.255.255.0
+no shut
+exit
+
+
+
+ip domain-name example.com
+crypto key generate rsa general-keys modulus 1024
+ip ssh version 2
+
+line vty 0 4
+password cisco
+transport input ssh
+login local
+
+line console 0
+password cisco
+login
+end
+
+wr
+
+!Step 3 
+! a - d
+
+router ospf 1
+network 192.168.1.0 0.0.0.255 area 0
+network 10.1.1.0 0.0.0.3 area 0
+passive-interface g0/0/1
+
+!Part 2 
+security passwords min-length 10
+enable algorithm-type scrypt secret cisco12345
+ip domain name netsec.com
+username user01 algorithm-type scrypt secret user01pass
+username admin privilege 15 algorithm-type scrypt secret adminpasswd
+
+line con 0
+ exec-timeout 5 0
+ logging synchronous
+line aux 0
+ exec-timeout 5 0
+login local
+line vty 0 4
+ exec-timeout 5 0
+ privilege level 15
+crypto key generate rsa general-keys modulus 1024
+ip ssh time-out 90
+ip ssh authentication-retries 2

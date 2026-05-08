@@ -1,0 +1,91 @@
+hostname SW02
+
+no ip domain lookup
+banner motd "Unauthorized access is prohibited"
+service password-encryption
+username cisco secret cisco
+
+int vlan 1
+ip address 192.168.1.3 255.255.255.0
+exit
+
+
+ip domain-name example.com
+crypto key generate rsa general-keys modulus 1024
+ip ssh version 2
+line vty 0 4
+password cisco
+transport input ssh
+login local
+
+line console 0
+password cisco
+login
+end
+
+wr
+
+!Part 1
+!step 2
+!configure basic settings on SW02
+no ip http server
+no ip http secure-server
+
+enable algorithm-type scrypt secret cisco12345
+
+line con 0
+logging synchronous
+exit
+
+!Step 2 configure trunk port on S2
+interface g1/0/1
+switchport trunk encapsulation dot1q
+switchport mode trunk
+
+!Step 3 change the native vlan to 99
+switchport trunk native vlan 99
+end
+
+!Step 4 prevent use of DTP on S2
+int g1/0/1
+switchport nonegotiate
+end
+
+!Step 8 disable trunk on S2 access ports
+interface g1/0/18
+switchport mode access
+
+
+!Part 3 protect against STP Attack
+interface g1/0/18
+spanning-tree portfast
+
+!step 2 enable BPDU guard on S2
+interface g1/0/18
+spanning-tree bpduguard enable
+
+!Step 3 enable root guard on S2
+interface g1/0/2
+spanning-tree guard root
+
+!step 4 enable loop guard on S2
+spanning-tree loopguard default
+
+!Step 6 configure port security for VoIP
+interface g1/0/18
+switchport mode access
+switchport port-security
+switchport port-security maximum 3
+switchport port-security violation shutdown
+switchport port-security aging time 120
+
+!Step 7 disable unused ports on S2
+interface range g1/0/2-17, g1/0/19-52
+shutdown
+
+!Step 8 move active ports to a vlan other than the default
+vlan 20
+name users
+
+interface g1/0/18
+switchport access vlan 20
