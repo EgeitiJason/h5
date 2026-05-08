@@ -354,6 +354,14 @@ interface range GigabitEthernet1/0/13-1/0/44, GigabitEthernet2/0/13-2/0/44
 line vty 0 15
  login local
  transport input ssh
+ exit
+! ============================================================
+! BGP configuration (AS65000, neighbor with Nakskov 83.151.132.139)
+! ============================================================
+router bgp 65000
+ bgp log-neighbor-changes
+ neighbor 10.0.99.2 remote-as 65010
+ exit
 !
 end
 write memory
