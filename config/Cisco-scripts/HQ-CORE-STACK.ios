@@ -361,7 +361,13 @@ line vty 0 15
 router bgp 65000
  bgp log-neighbor-changes
  neighbor 10.0.99.2 remote-as 65010
+ address-family ipv4 unicast
+  neighbor 10.0.99.2 activate
+  network 10.0.10.0 mask 255.255.255.0
+  network 10.0.20.0 mask 255.255.255.0
+  network 10.0.99.0 mask 255.255.255.0
  exit
+
 !
 end
 write memory
