@@ -13,19 +13,15 @@ ip routing
 ! ============================================================
 ! SSH configuration
 ! ============================================================
+no ip domain lookup
 ip domain-name prutl.internal
+banner motd "Unauthorized access is prohibited"
 username cisco privilege 15 algorithm-type scrypt secret cisco
 crypto key generate rsa modulus 2048
 ip ssh version 2
 ip ssh time-out 60
 ip ssh authentication-retries 2
-!
-! ============================================================
-! vty configuration
-! ============================================================
-line vty 0 15
- login local
- transport input ssh
+ip scp server enable
 !
 ! ============================================================
 ! VTP configuration
@@ -355,10 +351,10 @@ interface range GigabitEthernet1/0/45, GigabitEthernet2/0/45
 ! ============================================================
 interface Port-channel45
  description LAGG to Backup Server
- switchport mode trunk encapsulation dot1q
+ switchport trunk encapsulation dot1q
  switchport mode trunk
  switchport trunk native vlan 99
- switchport trunk allowed vlan 30
+ switchport trunk allowed vlan 30   
  spanning-tree portfast
  spanning-tree bpduguard enable
  storm-control broadcast level 1.00
@@ -412,7 +408,7 @@ ip default-gateway 10.0.99.2
 ! ============================================================
 ! Shutdown all unused ports (except for the stack ports)
 ! ============================================================
-interface range GigabitEthernet1/0/13-1/0/44, GigabitEthernet2/0/13-2/0/44
+interface range GigabitEthernet1/0/13-44, GigabitEthernet2/0/13-44
  shutdown
 !
 ! ============================================================
