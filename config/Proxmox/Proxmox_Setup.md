@@ -18,15 +18,15 @@ The cost of separate VLANs is essentially zero — two extra VLAN definitions on
 
 | Bond/Interface | NICs | Purpose | VLAN | Network | HQ-PVE-01 IP |
 |---|---|---|---|---|---|
-| bond0 → vmbr0 | nic0 + ens2f0 | VMs + Management | trunk: 10, 20, 99 | 10.0.99.0/24 (on vmbr0) | 10.0.99.10 |
-| bond1 | nic1 + ens2f1 | Ceph | 1000 (access) | 172.16.0.0/24 | 172.16.0.10 |
-| bond2 | nic2 + ens2f2 | Migration | 1010 (access) | 172.16.1.0/24 | 172.16.1.10 |
+| bond0 → vmbr0 | nic0 + nic4 | VMs + Management | trunk: 10, 20, 99 | 10.0.99.0/24 (on vmbr0) | 10.0.99.10 |
+| bond1 | nic1 + nic5 | Ceph | 1000 (access) | 172.16.0.0/24 | 172.16.0.10 |
+| bond2 | nic2 + nic6 | Migration | 1010 (access) | 172.16.1.0/24 | 172.16.1.10 |
 | nic3 | nic3 | Corosync ring 0 | 1020 (access) | 172.16.2.0/24 | 172.16.2.10 |
-| ens2f3 | ens2f3 | Corosync ring 1 | 1030 (access) | 172.16.3.0/24 | 172.16.3.10 |
+| nic7 | nic7 | Corosync ring 1 | 1030 (access) | 172.16.3.0/24 | 172.16.3.10 |
 
 IP assignments per host (note: you mentioned .10, .11, .13 — I'm assuming that was a typo and you mean .10, .11, .12 since they're sequential. Let me know if you really want to skip .12):
 
-| Host | vmbr0 (mgmt) | bond1 (Ceph) | bond2 (Migration) | nic3 (Corosync R0) | ens2f3 (Corosync R1) |
+| Host | vmbr0 (mgmt) | bond1 (Ceph) | bond2 (Migration) | nic3 (Corosync R0) | nic7 (Corosync R1) |
 |---|---|---|---|---|---|
 | HQ-PVE-01 | 10.0.99.10 | 172.16.0.10 | 172.16.1.10 | 172.16.2.10 | 172.16.3.10 |
 | HQ-PVE-02 | 10.0.99.11 | 172.16.0.11 | 172.16.1.11 | 172.16.2.11 | 172.16.3.11 |
@@ -422,17 +422,17 @@ iface nic0 inet manual
 iface nic1 inet manual
 iface nic2 inet manual
 iface nic3 inet manual
-iface ens2f0 inet manual
-iface ens2f1 inet manual
-iface ens2f2 inet manual
-iface ens2f3 inet manual
+iface nic4 inet manual
+iface nic5 inet manual
+iface nic6 inet manual
+iface nic7 inet manual
 
 # ============================================
 # bond0: VMs + Management (LACP)
 # ============================================
 auto bond0
 iface bond0 inet manual
-    bond-slaves nic0 ens2f0
+    bond-slaves nic0 nic4
     bond-miimon 100
     bond-mode 802.3ad
     bond-xmit-hash-policy layer2+3
@@ -457,7 +457,7 @@ iface vmbr0 inet static
 auto bond1
 iface bond1 inet static
     address 172.16.0.10/24
-    bond-slaves nic1 ens2f1
+    bond-slaves nic1 nic5
     bond-miimon 100
     bond-mode 802.3ad
     bond-xmit-hash-policy layer3+4
@@ -470,7 +470,7 @@ iface bond1 inet static
 auto bond2
 iface bond2 inet static
     address 172.16.1.10/24
-    bond-slaves nic2 ens2f2
+    bond-slaves nic2 nic6
     bond-miimon 100
     bond-mode 802.3ad
     bond-xmit-hash-policy layer2+3
@@ -486,10 +486,10 @@ iface nic3 inet static
     mtu 1500
 
 # ============================================
-# Corosync ring 1 (ens2f3, stack member 2)
+# Corosync ring 1 (nic7, stack member 2)
 # ============================================
-auto ens2f3
-iface ens2f3 inet static
+auto nic7
+iface nic7 inet static
     address 172.16.3.10/24
     mtu 1500
 ```
@@ -714,7 +714,7 @@ chronyc sources
 - [ ] Web UI reachable at `https://10.0.99.10:8006` (and .11, .12)
 - [ ] Test VM creation on Ceph storage with VLAN tag (e.g., VM NIC on vmbr0 with VLAN tag 10)
 - [ ] Test live migration between hosts
-- [ ] Test failover: `ip link set ens2f0 down` and verify bond keeps running
+- [ ] Test failover: `ip link set nic4 down` and verify bond keeps running
 
 ---
 
