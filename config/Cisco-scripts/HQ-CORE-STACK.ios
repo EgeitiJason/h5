@@ -411,6 +411,34 @@ router bgp 65000
   network 10.0.20.0 mask 255.255.255.0
   network 10.0.99.0 mask 255.255.255.0
  exit
+! ============================================================
+! Setup ip-helper-address for every VLAN to forward DHCP requests to the HQ-DHCP-01 server
+! ============================================================
+interface Vlan10
+ ip helper-address 10.0.10.13
 !
+interface Vlan20
+ ip helper-address 10.0.10.13
+!
+interface Vlan30
+ ip helper-address 10.0.10.13
+!
+interface Vlan99
+ ip helper-address 10.0.10.13
+!
+interface Vlan1000
+ ip helper-address 10.0.10.13
+!
+interface Vlan1010
+ ip helper-address 10.0.10.13
+!
+interface Vlan1020
+ ip helper-address 10.0.10.13
+!
+interface Vlan1030
+ ip helper-address 10.0.10.13
+!
+interface Vlan2030
+ ip helper-address 10.0.10.13
 end
 write memory
