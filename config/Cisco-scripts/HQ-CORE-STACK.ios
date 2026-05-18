@@ -373,7 +373,7 @@ ip dhcp pool DHCP_SERVER
 ! ============================================================
 ! Shutdown all unused ports (except for the stack ports)
 ! ============================================================
-interface range GigabitEthernet1/0/13-1/0/44, GigabitEthernet2/0/13-2/0/44
+interface range GigabitEthernet1/0/13-44, GigabitEthernet2/0/13-44
  shutdown
 !
 exit
