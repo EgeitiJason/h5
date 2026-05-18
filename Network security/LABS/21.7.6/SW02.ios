@@ -1,0 +1,33 @@
+hostname SW02
+
+no ip domain lookup
+banner motd "Unauthorized access is prohibited"
+service password-encryption
+username cisco secret cisco
+
+
+
+int vlan 1
+ip address 192.168.1.3 255.255.255.0
+exit
+
+
+
+
+
+ip default-gateway 192.168.1.1
+
+ip domain-name example.com
+crypto key generate rsa general-keys modulus 1024
+ip ssh version 2
+line vty 0 4
+password cisco
+transport input ssh
+login local
+
+line console 0
+password cisco
+login
+end
+
+wr
