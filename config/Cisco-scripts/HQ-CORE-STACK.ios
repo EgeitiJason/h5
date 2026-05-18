@@ -440,5 +440,7 @@ interface Vlan1030
 !
 interface Vlan2030
  ip helper-address 10.0.10.13
+exit
+!
 end
 write memory
