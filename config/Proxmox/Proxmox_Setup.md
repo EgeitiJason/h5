@@ -345,15 +345,13 @@ Same as before — download the Proxmox VE 8.x ISO, write to a separate USB stic
 
 ### Step 3.2: Disk selection
 
-1. Click **Options** at the disk selection screen.
-2. Filesystem: **zfs (RAID1)**.
-3. Select **only the two 64GB USB drives**. Do not select the SSDs.
-4. Advanced options:
-   - `ashift`: **13**
-   - `compress`: **lz4**
-   - `checksum`: **on**
-   - `copies`: **1**
-   - `hdsize`: leave at default
+ 
+1. On the **Target Harddisk** screen, click **Options**.
+2. Set **Filesystem** to `zfs (RAID1)` for a 2-disk mirror or `zfs (RAIDZ-1)`/mirror across 3 — for a clean 3-way mirror choose `zfs (RAID1)` and select all three disks (Proxmox treats RAID1 with 3 disks as a 3-way mirror).
+3. Select **all 3 SSDs** as members.
+4. Expand **Advanced Options** and set **`hdsize`** to the size you want the OS to consume — e.g., **`64`** (GB).
+   > `hdsize` tells the installer to only use the first N GB of each disk for the ZFS rpool. **The remaining space on each disk is left untouched** — that free space becomes your Ceph OSD partition later. This single setting is what makes the partitioned approach work cleanly through the GUI installer.
+5. Leave other ZFS options at defaults unless you have a reason to change `ashift` (default `12` = 4K is correct for SSDs).
 
 ### Step 3.3: Localization, password, network
 
@@ -362,7 +360,7 @@ Same as before — download the Proxmox VE 8.x ISO, write to a separate USB stic
 - Email: real address for system notifications.
 - Network configuration during install:
   - Management interface: **nic0**
-  - Hostname: `HQ-PVE-01.yourdomain.local`
+  - Hostname: `HQ-PVE-01.prutl.internal`
   - IP/CIDR: `10.0.99.10/24`
   - Gateway: `10.0.99.1`
   - DNS: your DNS server
@@ -436,7 +434,7 @@ iface bond0 inet manual
     bond-miimon 100
     bond-mode 802.3ad
     bond-xmit-hash-policy layer2+3
-    bond-lacp-rate fast
+    bond-lacp-rate slow
 
 # vmbr0: VLAN-aware bridge with management IP directly on it
 # Management traffic is untagged (native VLAN 99 on the switch trunk)
@@ -461,7 +459,7 @@ iface bond1 inet static
     bond-miimon 100
     bond-mode 802.3ad
     bond-xmit-hash-policy layer3+4
-    bond-lacp-rate fast
+    bond-lacp-rate slow
     mtu 9000
 
 # ============================================
@@ -474,7 +472,7 @@ iface bond2 inet static
     bond-miimon 100
     bond-mode 802.3ad
     bond-xmit-hash-policy layer2+3
-    bond-lacp-rate fast
+    bond-lacp-rate slow
     mtu 9000
 
 # ============================================
@@ -557,13 +555,9 @@ If jumbo pings fail with "frag needed", verify the switch reloaded after `system
 On each node:
 
 ```
-sed -i 's/^deb/#deb/' /etc/apt/sources.list.d/pve-enterprise.list
-sed -i 's/^deb/#deb/' /etc/apt/sources.list.d/ceph.list 2>/dev/null
-
-echo "deb http://download.proxmox.com/debian/pve $(lsb_release -cs) pve-no-subscription" > /etc/apt/sources.list.d/pve-no-subscription.list
-
-apt update && apt full-upgrade -y
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/pve/post-pve-install.sh)"
 ```
+
 
 ---
 
@@ -622,9 +616,9 @@ On each node:
 pveceph mon create
 ```
 
-### Step 7.4: Create managers on 2 nodes
+### Step 7.4: Create managers on all 3 nodes
 
-On HQ-PVE-01 and HQ-PVE-02:
+On each node:
 
 ```
 pveceph mgr create
@@ -632,48 +626,80 @@ pveceph mgr create
 
 ### Step 7.5: Create OSDs on all 3 nodes
 
-```
+#### Step 7.5.1: Identify Disks and Free Space
+
+On each node:
+ 
+```bash
 lsblk
+ceph-volume inventory   # shows what Ceph considers usable
 ```
 
-Identify the three 1TB SSDs. On each node:
+#### Step 7.5.2: Create a Partition on Each SSD, then the OSD
 
+For **each of the 3 SSDs on each node**, create one partition spanning the free space after the rpool, then hand that partition to Ceph.
+ 
+Example for one disk (`/dev/sdX`) — repeat per disk per node:
+ 
+```bash
+# Create one partition using all remaining free space
+sgdisk -n0:0:0 -t0:8300 /dev/sdX
+partprobe /dev/sdX
+ 
+# Identify the new partition (e.g., /dev/sdX4) with lsblk, then create the OSD on it:
+pveceph osd create /dev/sdX4
 ```
-pveceph osd create /dev/sdX
-pveceph osd create /dev/sdY
-pveceph osd create /dev/sdZ
-```
+ 
+> `pveceph osd create` accepts a **partition** as well as a whole disk. Pointing it at the large post-OS partition is exactly how it can keep OS + OSD on the same physical SSD without conflict.
+ 
+Repeat for all 3 SSDs on Node 1, then all 3 on Node 2, then all 3 on Node 3 → **9 OSDs total**.
 
 ### Step 7.6: Verify Ceph health
 
 ```
-ceph -s
 ceph osd tree
+ceph -s
 ```
 
-You want 9 OSDs all `up` and `in`, 3 monitors, 2 managers.
+You want 9 OSDs all `up` and `in`, 3 monitors, 3 managers.
 
-### Step 7.7: Apply tunings
-
-Edit `/etc/pve/ceph.conf`:
-
-```
-[osd]
-    osd_max_backfills = 1
-    osd_recovery_max_active = 2
-    osd_recovery_op_priority = 2
-    osd_client_op_priority = 63
-    osd_op_queue = wpq
-    osd_op_queue_cut_off = high
-```
-
-Restart OSDs one at a time, waiting for `HEALTH_OK` between each.
 
 ### Step 7.8: Create the RBD pool for VMs
 
+#### Step 7.8.1: Create the RBD Pool for VM Disks
+ 
+GUI: **Datacenter → \<Node> → Ceph → Pools → Create**:
+ 
+- **Name:** `vm-pool`
+- **Size:** `3`  •  **Min Size:** `2`
+- **PG Autoscale:** `on` (let Ceph manage placement groups)
+- Check **Add as Storage** (auto-creates the Proxmox RBD storage entry)
+CLI equivalent:
+ 
+```bash
+pveceph pool create vm-pool --size 3 --min_size 2 --pg_autoscale_mode on --add_storages 1
 ```
-pveceph pool create vm-storage --size 3 --min_size 2 --pg_autoscale_mode on --add_storages
-```
+
+This pool will appear under **Datacenter → Storage** as an RBD store usable for VM/CT disks across all nodes.
+
+#### Step 7.8.2: Create CephFS for ISO Storage
+ 
+ISOs (and container templates, snippets) need a **filesystem**, not raw RBD. Use CephFS.
+ 
+1. Create the **Metadata Servers (MDS)** — at least 2 for redundancy (one active, one standby):
+   GUI: **Ceph → CephFS → Create MDS** on each chosen node, or CLI on each node:
+   ```bash
+   pveceph mds create
+   ```
+ 
+2. Create the CephFS (this creates the data + metadata pools and mounts it cluster-wide):
+   GUI: **Ceph → CephFS → Create CephFS** (name e.g., `cephfs`, check **Add as Storage**).
+   CLI:
+   ```bash
+   pveceph fs create --name cephfs --add-storage 1
+   ```
+ 
+3. Once added as storage, edit the CephFS storage (**Datacenter → Storage → cephfs → Edit**) and enable the content types: **ISO image**, **Container template**, **Snippets**, **VZDump backup** as desired. Now ISOs uploaded there are available on every node.
 
 ---
 
