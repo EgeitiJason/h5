@@ -1,0 +1,241 @@
+# Create-FileSrv.ps1
+# This script sets up a file server with shared folders and permissions based on department and user data from a CSV file.
+
+<#Mappestruktur for filserver (E:\Shares):
+E:\Shares
+├── Faelles
+├── Afdelinger
+│   ├── Lager
+│   │   ├── Nakskov
+│   │   └── Aero
+│   ├── IT
+│   │   ├── HQ
+│   │   ├── Nakskov
+│   │   └── Aero
+│   ├── Ledelse
+│   ├── Oekonomi
+│   ├── Indkoeb
+│   ├── Salg
+│   ├── Marketing
+│   └── Produktion
+└── Privat
+    ├── MILAU
+    ├── CABER
+    └── osv.#>
+
+
+Import-Module ActiveDirectory
+
+$csvPath = "C:\Users\michella_admin\Desktop\prutl-users.csv"
+$basePath = "E:\Shares"
+
+Install-WindowsFeature FS-FileServer -IncludeManagementTools
+
+New-Item -Path $basePath -ItemType Directory -Force
+New-Item -Path "$basePath\Faelles" -ItemType Directory -Force
+New-Item -Path "$basePath\Afdelinger" -ItemType Directory -Force
+New-Item -Path "$basePath\Privat" -ItemType Directory -Force
+
+function Set-FolderPermission {
+    param(
+        [string]$Path,
+        [string]$Identity,
+        [string]$Rights = "Modify"
+    )
+
+    $acl = Get-Acl $Path
+    $acl.SetAccessRuleProtection($true, $false)
+
+    foreach ($rule in $acl.Access) {
+        $acl.RemoveAccessRule($rule) | Out-Null
+    }
+
+    $adminRule = New-Object System.Security.AccessControl.FileSystemAccessRule(
+        "Domain Admins",
+        "FullControl",
+        "ContainerInherit,ObjectInherit",
+        "None",
+        "Allow"
+    )
+
+    $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule(
+        $Identity,
+        $Rights,
+        "ContainerInherit,ObjectInherit",
+        "None",
+        "Allow"
+    )
+
+    $acl.AddAccessRule($adminRule)
+    $acl.AddAccessRule($accessRule)
+
+    Set-Acl -Path $Path -AclObject $acl
+}
+
+if (-not (Get-SmbShare -Name "Faelles" -ErrorAction SilentlyContinue)) {
+    New-SmbShare -Name "Faelles" -Path "$basePath\Faelles" -ChangeAccess "Domain Users" -FullAccess "Domain Admins"
+}
+
+if (-not (Get-SmbShare -Name "Afdelinger" -ErrorAction SilentlyContinue)) {
+    New-SmbShare -Name "Afdelinger" -Path "$basePath\Afdelinger" -ChangeAccess "Domain Users" -FullAccess "Domain Admins"
+}
+
+if (-not (Get-SmbShare -Name "Privat" -ErrorAction SilentlyContinue)) {
+    New-SmbShare -Name "Privat" -Path "$basePath\Privat" -ChangeAccess "Domain Users" -FullAccess "Domain Admins"
+}
+
+Set-SmbShare -Name "Afdelinger" -FolderEnumerationMode AccessBased -Force
+Set-SmbShare -Name "Privat" -FolderEnumerationMode AccessBased -Force
+
+Set-FolderPermission -Path "$basePath\Faelles" -Identity "Domain Users"
+
+$departments = @{
+    "Ledelse"     = "SG-Ledelse"
+    "Oekonomi"   = "SG-Oekonomi"
+    "Indkoeb"    = "SG-Indkoeb"
+    "Salg"       = "SG-Salg"
+    "Marketing"  = "SG-Marketing"
+    "IT"         = "SG-IT"
+    "Lager"      = "SG-Lager"
+    "Produktion" = "SG-Produktion"
+}
+
+foreach ($dept in $departments.Keys) {
+    $path = "$basePath\Afdelinger\$dept"
+    New-Item -Path $path -ItemType Directory -Force
+    Set-FolderPermission -Path $path -Identity $departments[$dept]
+}
+
+$locationFolders = @(
+    @{ Path = "$basePath\Afdelinger\Lager\Nakskov"; Identity = "SG-NK-Lager" },
+    @{ Path = "$basePath\Afdelinger\Lager\Aero";    Identity = "SG-AE-Lager" },
+    @{ Path = "$basePath\Afdelinger\IT\HQ";         Identity = "SG-HQ-IT" },
+    @{ Path = "$basePath\Afdelinger\IT\Nakskov";    Identity = "SG-NK-IT" },
+    @{ Path = "$basePath\Afdelinger\IT\Aero";       Identity = "SG-AE-IT" }
+)
+
+foreach ($folder in $locationFolders) {
+    New-Item -Path $folder.Path -ItemType Directory -Force
+    Set-FolderPermission -Path $folder.Path -Identity $folder.Identity
+}
+
+$users = Import-Csv -Path $csvPath -Delimiter ";" -Encoding UTF8
+
+foreach ($user in $users) {
+    $sam = $user.Brugernavn.Trim()
+    $privatePath = "$basePath\Privat\$sam"
+
+    New-Item -Path $privatePath -ItemType Directory -Force
+    Set-FolderPermission -Path $privatePath -Identity $sam
+
+    Write-Host "Privat mappe oprettet til $sam" -ForegroundColor Green
+}
+
+Write-Host "Filserver setup færdigt." -ForegroundColor Green
+Write-Host "\\PRUTL-FS01\Faelles"
+Write-Host "\\PRUTL-FS01\Afdelinger"
+Write-Host "\\PRUTL-FS01\Privat"
+
+
+
+
+
+# =========================
+# GPO for drev-mapping kommer i næste script: Create-DriveMappingGPO.ps1
+# =========================
+
+Import-Module GroupPolicy
+
+$domain = "prutl.internal"
+$gpoName = "GPO_PRUTL_Drev_Mapping"
+$linkOU = "OU=Users,OU=PRUTL,DC=prutl,DC=internal"
+
+$scriptName = "Map-PRUTLDrives.ps1"
+$netlogonPath = "\\$domain\NETLOGON\$scriptName"
+
+$scriptContent = @'
+$drives = @{
+    "F" = "\\PRUTL-FS01\Faelles"
+    "G" = "\\PRUTL-FS01\Afdelinger"
+    "H" = "\\PRUTL-FS01\Privat\$env:USERNAME"
+}
+
+foreach ($letter in $drives.Keys) {
+    $path = $drives[$letter]
+
+    if (Test-Path "$letter`:") {
+        net use "$letter`:" /delete /y | Out-Null
+    }
+
+    net use "$letter`:" $path /persistent:yes | Out-Null
+}
+'@
+
+Set-Content -Path $netlogonPath -Value $scriptContent -Encoding UTF8
+
+$gpo = Get-GPO -Name $gpoName -ErrorAction SilentlyContinue
+
+if (-not $gpo) {
+    $gpo = New-GPO -Name $gpoName
+}
+
+New-GPLink -Name $gpoName -Target $linkOU -LinkEnabled Yes -ErrorAction SilentlyContinue
+
+$command = "powershell.exe -ExecutionPolicy Bypass -NoProfile -WindowStyle Hidden -File `"$netlogonPath`""
+
+Set-GPRegistryValue `
+    -Name $gpoName `
+    -Key "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" `
+    -ValueName "PRUTLDriveMapping" `
+    -Type String `
+    -Value $command
+
+Write-Host "GPO oprettet." -ForegroundColor Green
+Write-Host "F: \\PRUTL-FS01\Faelles"
+Write-Host "G: \\PRUTL-FS01\Afdelinger"
+Write-Host "H: \\PRUTL-FS01\Privat\%username%"
+
+
+
+
+
+# =========================
+# Home folder mapping på brugere
+# =========================
+
+
+Import-Module ActiveDirectory
+
+$csvPath = "C:\Users\michella_admin\Desktop\prutl-users.csv"
+$fileServer = "PRUTL-FS01"
+$shareName = "Privat"
+
+$users = Import-Csv -Path $csvPath -Delimiter ";" -Encoding UTF8
+
+foreach ($user in $users) {
+
+    $sam = $user.Brugernavn.Trim()
+    $homeDrive = "H:"
+    $homeDirectory = "\\$fileServer\$shareName\$sam"
+
+    $adUser = Get-ADUser -Identity $sam -ErrorAction SilentlyContinue
+
+    if ($adUser) {
+        Set-ADUser `
+            -Identity $sam `
+            -HomeDrive $homeDrive `
+            -HomeDirectory $homeDirectory
+
+        Write-Host "Sat Home Folder for $sam -> $homeDrive $homeDirectory" -ForegroundColor Green
+    }
+    else {
+        Write-Warning "Bruger findes ikke i AD: $sam"
+    }
+}
+
+Write-Host "Home folders er sat på brugerne." -ForegroundColor Cyan
+
+
+
+#Kør gpupdate /force på en klient og log ud/ind.
+

@@ -28,14 +28,31 @@ $ouStructure = @(
                 Children = @(
                     @{ Name = "Admin" },
                     @{ 
-                        Name = "Administration" 
+                        Name = "HQ" 
                         Children = @(
-                            @{ Name = "IT" },
-                            @{ Name = "HR" },
-                            @{ Name = "Finans" }
+                            @{ Name = "Ledelse" },
+                            @{ Name = "Oekonomi" },
+                            @{ Name = "Indkoeb" },
+                            @{ Name = "Salg" },
+                            @{ Name = "Marketing" },
+                            @{ Name = "IT" }
                         )
                     },
-                    @{ Name = "Lager" },
+                    @{ 
+                        Name = "Nakskov" 
+                        Children = @(
+                            @{ Name = "Lager" },
+                            @{ Name = "Produktion" },
+                            @{ Name = "IT" }
+                        )
+                    },
+                    @{ 
+                        Name = "Aeroe" 
+                        Children = @(
+                            @{ Name = "Lager" },
+                            @{ Name = "IT" }
+                        )
+                    },
                     @{ Name = "Service Accounts" }
                 )
             }
