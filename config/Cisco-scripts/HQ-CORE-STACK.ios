@@ -466,5 +466,24 @@ interface Vlan99
 !
 exit
 !
+radius server HQ-RADIUS-01
+ address ipv4 10.0.10.22 auth-port 1645 acct-port 1646
+ key cisco
+!
+exit
+!
+aaa group server radius HQ-RADIUS
+ server name HQ-RADIUS-01
+exit
+aaa authentication login VTY_AUTHEN local group HQ-RADIUS
+!
+aaa authorization exec VTY_AUTHOR group HQ-RADIUS 
+!
+line vty 0 4
+ authorization exec VTY_AUTHOR
+ login authentication VTY_AUTHEN
+!
+exit
+!
 end
 write memory
