@@ -1,0 +1,137 @@
+Import-Module ActiveDirectory
+
+$groupPath = "OU=Groups,OU=PRUTL,DC=prutl,DC=internal"
+
+$groups = @(
+    "SG-Ledelse",
+    "SG-Oekonomi",
+    "SG-Indkoeb",
+    "SG-Salg",
+    "SG-Marketing",
+    "SG-IT",
+    "SG-HQ-IT",
+    "SG-NK-IT",
+    "SG-AE-IT",
+    "SG-Lager",
+    "SG-NK-Lager",
+    "SG-AE-Lager",
+    "SG-Produktion"
+)
+
+foreach ($group in $groups) {
+    if (-not (Get-ADGroup -Identity $group -ErrorAction SilentlyContinue)) {
+        New-ADGroup -Name $group -SamAccountName $group -GroupScope Global -GroupCategory Security -Path $groupPath
+        Write-Host "Oprettet gruppe: $group" -ForegroundColor Green
+    }
+}
+
+$users = Import-Csv -Path "C:\Users\michella_admin\Desktop\prutl-users.csv" -Delimiter ";" -Encoding UTF8
+
+foreach ($user in $users) {
+    $securePassword = ConvertTo-SecureString "Password1!" -AsPlainText -Force
+    $sam = $user.Brugernavn.Trim()
+
+    if (-not (Get-ADUser -Identity $sam -ErrorAction SilentlyContinue)) {
+        New-ADUser `
+            -Name $user.Navn `
+            -GivenName $user.Fornavn `
+            -Surname $user.Efternavn `
+            -SamAccountName $sam `
+            -UserPrincipalName $user.UPN `
+            -Path $user.OUPath `
+            -Department $user.Afdeling `
+            -Title $user.Stilling `
+            -AccountPassword $securePassword `
+            -Enabled $true `
+            -ChangePasswordAtLogon $true
+
+        Write-Host "Oprettet bruger: $sam" -ForegroundColor Green
+    }
+    else {
+        Write-Host "Bruger findes allerede: $sam" -ForegroundColor Yellow
+    }
+
+    foreach ($group in $user.SecurityGroups -split ",") {
+        $group = $group.Trim()
+
+        if ($group -ne "") {
+            if (Get-ADGroup -Identity $group -ErrorAction SilentlyContinue) {
+                Add-ADGroupMember -Identity $group -Members $sam -ErrorAction SilentlyContinue
+                Write-Host "Tilføjet $sam til $group" -ForegroundColor Cyan
+            }
+            else {
+                Write-Warning "Gruppen findes ikke: $group"
+            }
+        }
+    }
+}
+
+
+
+
+
+#---------------------------------------
+# hvis sg ikke kom ind og den bare oprette users, brug denne til at få SG ind i AD
+Import-Module ActiveDirectory
+
+$groupPath = "OU=Groups,OU=PRUTL,DC=prutl,DC=internal"
+
+$groups = @(
+    "SG-Ledelse",
+    "SG-Oekonomi",
+    "SG-Indkoeb",
+    "SG-Salg",
+    "SG-Marketing",
+    "SG-IT",
+    "SG-HQ-IT",
+    "SG-NK-IT",
+    "SG-AE-IT",
+    "SG-Lager",
+    "SG-NK-Lager",
+    "SG-AE-Lager",
+    "SG-Produktion"
+)
+
+foreach ($group in $groups) {
+    $existingGroup = Get-ADGroup -Filter "Name -eq '$group'" -ErrorAction SilentlyContinue
+
+    if (-not $existingGroup) {
+        New-ADGroup `
+            -Name $group `
+            -SamAccountName $group `
+            -GroupScope Global `
+            -GroupCategory Security `
+            -Path $groupPath
+
+        Write-Host "Oprettet gruppe: $group" -ForegroundColor Green
+    }
+    else {
+        Write-Host "Gruppen findes allerede: $group" -ForegroundColor Yellow
+    }
+}
+
+
+#---------------------------------------
+
+# Når SG er i AD, så kør denne for at få brugerne ind i de rigtige SG
+Import-Module ActiveDirectory
+
+$users = Import-Csv -Path "C:\Users\michella_admin\Desktop\prutl-users.csv" -Delimiter ";" -Encoding UTF8
+
+foreach ($user in $users) {
+    $sam = $user.Brugernavn.Trim()
+
+    foreach ($group in $user.SecurityGroups -split ",") {
+        $group = $group.Trim()
+
+        if ($group -ne "") {
+            Add-ADGroupMember `
+                -Identity $group `
+                -Members $sam `
+                -ErrorAction SilentlyContinue
+
+            Write-Host "Tilføjet $sam til $group" -ForegroundColor Cyan
+        }
+    }
+}
+
